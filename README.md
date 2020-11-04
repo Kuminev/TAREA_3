@@ -14,27 +14,20 @@ output:
 
 ```{r setup, include=FALSE}
 library(knitr)
-
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Instalación de paquetes:
 ```{r eval = FALSE}
-
 install.packages("leaflet")
-
 install.packages("tidyr")
 ```
 
 Carga de paquetes:
 ```{r message = FALSE}
-
 library(leaflet)
-
 library(sf)
-
 library(tidyr)
-
 library(dplyr)
 ```
 
@@ -49,7 +42,6 @@ mapa_1 <- leaflet()%>%
   addProviderTiles(providers$Esri.WorldImagery, group = "Imagen satelital")  %>% 
   addLayersControl(
     baseGroups = c("Rutas","Topografia", "Imagen satelital"))
-
 mapa_1
 ```
 
@@ -57,18 +49,14 @@ mapa_1
 
 ```{r}
 url_base_wfs <- "http://geos.snitcr.go.cr/be/IGN_5/wfs?"
-
 solicitud_wfs <- 
   "request=GetFeature&service=WFS&version=2.0.0&typeName=IGN_5:limitecantonal_5k&outputFormat=application/json"
-
 sf_cantones<- st_read(paste0(url_base_wfs, solicitud_wfs))
-
 sf_cantones_json <-
   st_read(
           "https://raw.githubusercontent.com/taller-r-jornadas-sigtd-2020/datos/master/cantones.geojson", 
           quiet = T
 )
-
 ```
 
 ## Construcción de casos positivos, activos, recuperados y fallecidos.
@@ -77,7 +65,6 @@ sf_cantones_json <-
 #Positivos
 casos_positivos <- 
   read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_POSITIVOS.csv")
-
 df_positivos<-
   casos_positivos %>%
   pivot_longer(
@@ -85,23 +72,17 @@ df_positivos<-
     names_to = "fecha", 
     values_to = "positivos"
   )
-
 df_positivos$fecha <- as.Date(df_positivos$fecha, "X%d.%m.%Y")
-
 df_positivos_uf <- 
 df_positivos %>%
 filter(fecha == max(fecha), na.rm = TRUE) %>%
 select(cod_canton, positivos)
-
 sf_positivos_cantones_uf<-
   left_join(sf_cantones, df_positivos_uf, by = c('cod_canton')) %>%
   arrange(desc(positivos))
-
 #Activos
-
 casos_activos <- 
   read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_ACTIVOS.csv")
-
 df_activos<-
   casos_activos %>%
   pivot_longer(
@@ -109,23 +90,17 @@ df_activos<-
     names_to = "fecha", 
     values_to = "activos"
   )
-
 df_activos$fecha <- as.Date(df_activos$fecha, "X%d.%m.%Y")
-
 df_activos_uf <- 
 df_activos %>%
 filter(fecha == max(fecha), na.rm = TRUE) %>%
 select(cod_canton, activos)
-
 sf_activos_cantones_uf<-
   left_join(sf_cantones, df_activos_uf, by = c('cod_canton')) %>%
   arrange(desc(activos))
-
 #Recuperados
-
 casos_recupe <- 
   read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_RECUP.csv")
-
 df_recupe<-
   casos_recupe %>%
   pivot_longer(
@@ -133,23 +108,17 @@ df_recupe<-
     names_to = "fecha", 
     values_to = "recupe"
   )
-
 df_recupe$fecha <- as.Date(df_recupe$fecha, "X%d.%m.%Y")
-
 df_recupe_uf <- 
 df_recupe %>%
 filter(fecha == max(fecha), na.rm = TRUE) %>%
 select(cod_canton, recupe)
-
 sf_recupe_cantones_uf<-
   left_join(sf_cantones, df_recupe_uf, by = c('cod_canton')) %>%
   arrange(desc(recupe))
-
 #Fallecidos
-
 casos_fallecidos <- 
   read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_FALLECIDOS.csv")
-
 df_fallecidos<-
   casos_fallecidos %>%
   pivot_longer(
@@ -157,16 +126,37 @@ df_fallecidos<-
     names_to = "fecha", 
     values_to = "fallecidos"
   )
-
 df_fallecidos$fecha <- as.Date(df_fallecidos$fecha, "X%d.%m.%Y")
-
 df_fallecidos_uf <- 
 df_fallecidos %>%
 filter(fecha == max(fecha), na.rm = TRUE) %>%
 select(cod_canton, fallecidos)
-
 sf_fallecidos_cantones_uf<-
   left_join(sf_cantones, df_fallecidos_uf, by = c('cod_canton')) %>%
   arrange(desc(fallecidos))
+```
 
+#MAPA DE CONJUNTO
+
+```{r message=FALSE, warning=FALSE, eval=FALSE}
+bins <- c(0, 25, 50, 75, 100)
+paleta1 <- colorBin("YlOrRd", domain = sf_positivos_cantones_uf$positivos, bins = bins)
+leaflet(sf_cantones) %>% 
+  addProviderTiles(providers$OpenStreetMap.Mapnik, group = "OpenStreetMap") %>%
+  addPolygons(fillColor = ~paleta1(sf_positivos_cantones_uf$positivos), stroke=T, fillOpacity = 1,
+              color="black", weight=0.2, opacity= 0.1,
+              group = "Positivos",
+              popup = paste(
+                "Cantón: ", sf_cantones$canton, "<br>",
+                "Positivos: ", sf_positivos_cantones_uf$positivos)
+              )%>%
+     addLegend("bottomright", pal = paleta, values = ~positivos,
+            title = "Casos positivos",
+            opacity = 1
+  ) %>%  
+  addLayersControl(
+    baseGroups = c("OpenStreetMap"),
+    overlayGroups = c("Positivos"),
+    options = layersControlOptions(collapsed = TRUE)    
+  )
 ```
