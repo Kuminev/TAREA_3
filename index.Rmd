@@ -176,9 +176,6 @@ sf_fallecidos_cantones_uf<-
 ```{r message=FALSE, warning=FALSE, eval=FALSE}
 bins <- c(0, 25, 50, 75, 100)
 paleta1 <- colorBin("YlOrRd", domain = sf_positivos_cantones_uf$positivos, bins = bins)
-paleta2 <- colorBin("YlOrRd", domain = sf_activos_cantones_uf$activos, bins = bins)
-paleta3 <- colorBin("YlOrRd", domain = sf_recupe_cantones_uf$recupe, bins = bins)
-paleta4 <- colorBin("YlOrRd", domain = sf_fallecidos_cantones_uf$fallecidos, bins = bins)
 
 leaflet(sf_cantones) %>% 
   addProviderTiles(providers$OpenStreetMap.Mapnik, group = "OpenStreetMap") %>%
@@ -189,34 +186,13 @@ leaflet(sf_cantones) %>%
                 "Cantón: ", sf_cantones$canton, "<br>",
                 "Positivos: ", sf_positivos_cantones_uf$positivos)
               )%>%
-  addPolygons(fillColor = ~paleta2(sf_activos_cantones_uf), stroke=T, fillOpacity = 1,
-              color="black", weight=0.2, opacity= 0.1,
-              group = "Activos", 
-              popup = paste(
-                "Cantón: ", sf_cantones$canton, "<br>",
-                "Activos: ", sf_activos_cantones_uf$activos
-                ))%>%
-  addPolygons(fillColor = ~paleta3(sf_recupe_cantones_uf), stroke=T, fillOpacity = 1,
-              color="black", weight=0.2, opacity= 0.1,
-              group = "Recuperados", 
-              popup = paste(
-                "Cantón: ", sf_cantones$canton, "<br>",
-                "Recuperados: ", sf_recupe_cantones_uf$recupe,
-                ))%>%
-  addPolygons(fillColor = ~paleta4(sf_fallecidos_cantones_uf), stroke=T, fillOpacity = 1,
-              color="black", weight=0.2, opacity= 0.1,
-              group = "Fallecidos", 
-              popup = paste(
-                "Cantón: ", sf_cantones$canton, "<br>",
-                "Recuperados: ", sf_fallecidos_cantones_uf$fallecidos,
-                ))%>%
      addLegend("bottomright", pal = paleta, values = ~positivos,
             title = "Casos positivos",
             opacity = 1
   ) %>%  
   addLayersControl(
     baseGroups = c("OpenStreetMap"),
-    overlayGroups = c("Cantones", "Positivos", "Activos", "Recuperados", "Fallecidos"),
+    overlayGroups = c("Positivos"),
     options = layersControlOptions(collapsed = TRUE)    
   )
 
