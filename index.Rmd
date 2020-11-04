@@ -1,0 +1,197 @@
+---
+title: "Tarea # 3"
+author: "Fernando Bermúdez Kuminev"
+date: "2020-11-04"
+output:
+  html_document:
+    theme: readable    
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+      smooth_scroll: false    
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Instalación de paquetes:
+```{r eval = FALSE, message = FALSE}
+
+install.packages("leaflet")
+
+install.packages("tidyr")
+```
+
+Carga de paquetes:
+```{r message = FALSE}
+
+library(leaflet)
+
+library(sf)
+
+library(tidyr)
+
+library(dplyr)
+```
+
+# POSITIVOS
+
+```{r message=FALSE, warning=FALSE}
+#Positivos
+sf_cantones <-
+  st_read(
+    "https://raw.githubusercontent.com/taller-r-jornadas-sigtd-2020/datos/master/cantones.geojson", 
+    quiet = T
+  )
+
+casos_positivos <- 
+  read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_POSITIVOS.csv")
+
+df_positivos<-
+  casos_positivos %>%
+  pivot_longer(
+    cols = c(-cod_provin, -provincia, -cod_canton, -canton), 
+    names_to = "fecha", 
+    values_to = "positivos"
+  )
+
+df_positivos$fecha <- as.Date(df_positivos$fecha, "X%d.%m.%Y")
+
+df_positivos_uf <- 
+df_positivos %>%
+filter(fecha == max(fecha), na.rm = TRUE) %>%
+select(cod_canton, positivos)
+
+sf_positivos_cantones_uf<-
+  left_join(sf_cantones, df_positivos_uf, by = c('cod_canton')) %>%
+  arrange(desc(positivos))
+
+```
+
+# ACTIVOS
+
+```{r}
+#Activos
+
+casos_activos <- 
+  read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_ACTIVOS.csv")
+
+df_activos<-
+  casos_activos %>%
+  pivot_longer(
+    cols = c(-cod_provin, -provincia, -cod_canton, -canton), 
+    names_to = "fecha", 
+    values_to = "activos"
+  )
+
+df_activos$fecha <- as.Date(df_activos$fecha, "X%d.%m.%Y")
+
+df_activos_uf <- 
+df_activos %>%
+filter(fecha == max(fecha), na.rm = TRUE) %>%
+select(cod_canton, activos)
+
+sf_activos_cantones_uf<-
+  left_join(sf_cantones, df_activos_uf, by = c('cod_canton')) %>%
+  arrange(desc(activos))
+
+```
+
+# RECUPERADOS
+```{r}
+#Recuperados
+
+casos_recupe <- 
+  read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_RECUP.csv")
+
+df_recupe<-
+  casos_recupe %>%
+  pivot_longer(
+    cols = c(-cod_provin, -provincia, -cod_canton, -canton), 
+    names_to = "fecha", 
+    values_to = "recupe"
+  )
+
+df_recupe$fecha <- as.Date(df_recupe$fecha, "X%d.%m.%Y")
+
+df_recupe_uf <- 
+df_recupe %>%
+filter(fecha == max(fecha), na.rm = TRUE) %>%
+select(cod_canton, recupe)
+
+sf_recupe_cantones_uf<-
+  left_join(sf_cantones, df_recupe_uf, by = c('cod_canton')) %>%
+  arrange(desc(recupe))
+
+```
+
+# FALLECIDOS
+```{r}
+#Fallecidos
+
+casos_fallecidos <- 
+  read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_FALLECIDOS.csv")
+
+df_fallecidos<-
+  casos_fallecidos %>%
+  pivot_longer(
+    cols = c(-cod_provin, -provincia, -cod_canton, -canton), 
+    names_to = "fecha", 
+    values_to = "fallecidos"
+  )
+
+df_fallecidos$fecha <- as.Date(df_fallecidos$fecha, "X%d.%m.%Y")
+
+df_fallecidos_uf <- 
+df_fallecidos %>%
+filter(fecha == max(fecha), na.rm = TRUE) %>%
+select(cod_canton, fallecidos)
+
+sf_fallecidos_cantones_uf<-
+  left_join(sf_cantones, df_fallecidos_uf, by = c('cod_canton')) %>%
+  arrange(desc(fallecidos))
+
+
+
+```
+
+# MAPA
+
+```{r eval=FALSE}
+sf_cantones_total <-
+    left_join(sf_cantones, df_positivos_uf, by = c('cod_canton')) %>%
+    left_join (df_fallecidos_uf) %>%
+    left_join (df_recupe_uf) %>%
+    left_join (df_activos_uf)
+
+bins <- c(0, 25, 50, 75, 100)
+paleta1 <- colorBin("YlOrRd", domain = sf_cantones_total$positivos, bins = bins)
+
+bins <- c(0, 25, 50, 75, 100)
+paleta2 <- colorBin("Greens", sf_cantones_total$activos, bins = bins)
+
+bins <- c(0, 25, 50, 75, 100)
+paleta3 <- colorBin("Accent", sf_cantones_total$recupe, bins = bins)
+
+bins <- c(0, 25, 50, 75, 100)
+paleta4 <- colorBin("RdYlBu", sf_cantones_total$recupe, bins = bins)
+
+
+leaflet(sf_cantones_total)%>% 
+  fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11)%>% 
+  addTiles() %>% 
+  addProviderTiles(providers$Thunderforest.OpenCycleMap, group = "Rutas") %>%
+  addProviderTiles(providers$OpenTopoMap, group = "Topografia") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imagen satelital")  %>% 
+  addPolygons(stroke=T, fillOpacity = 0.1,color="black", weight=0.2, opacity= 0.1,group = "Positivos",popup = paste("Cantón: ", sf_cantones_total, "<br>","Positivos: ", sf_cantones_total$positivos))%>% addLegend("bottomright", pal = paleta1, values = ~positivos, title = "Casos positivos", opacity = 1) %>%  
+  addPolygons(stroke=T, fillOpacity = 0.1, color="black", weight=0.2, opacity= 0.1, group = "Positivos", popup = paste("Cantón: ", sf_cantones_total$canton, "<br>", "Activos: ", sf_cantones_total$activos))%>% addLegend("bottomleft", pal = paleta2, values = ~activos,title = "Casos activos", opacity = 1) %>%  
+  addPolygons(stroke=T, fillOpacity = 0.1, color="black", weight=0.2, opacity= 0.1,group = "Recupe",popup = paste("Cantón: ", sf_cantones_total, "<br>","Recuperados: ", sf_cantones_total$recupe))%>% addLegend("bottomleft", pal = paleta3, values = ~recupe,title = "Casos recuperados",opacity = 1) %>% 
+  addPolygons(stroke=T, fillOpacity = 0.1,color="black", weight=0.2, opacity= 0.1, group = "Fallecidos", popup = paste( "Canton: ", sf_cantones_total$canton, "<br>","Fallecidos:", sf_cantones_total$fallecidos)) %>% addLegend("bottomleft", pal = paleta3, values = ~fallecidos, title = "Casos fallecidos", opacity = 1) %>%
+  addLayersControl(baseGroups = c("Rutas","Topografia", "Imagen satelital"),
+                   overlayGroups = c("Positivos", "Activos","Recuperados", "Fallecidos"))
+
+```
