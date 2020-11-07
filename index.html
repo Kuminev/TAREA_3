@@ -1539,7 +1539,8 @@ div.tocify {
 <pre class="r"><code>install.packages(&quot;leaflet&quot;)
 
 install.packages(&quot;tidyr&quot;)</code></pre>
-<p>Carga de paquetes:</p>
+<div id="carga-de-paquetes" class="section level3">
+<h3>Carga de paquetes:</h3>
 <pre class="r"><code>library(leaflet)</code></pre>
 <pre><code>## Warning: package &#39;leaflet&#39; was built under R version 4.0.3</code></pre>
 <pre class="r"><code>library(sf)
@@ -1548,6 +1549,7 @@ library(tidyr)</code></pre>
 <pre><code>## Warning: package &#39;tidyr&#39; was built under R version 4.0.3</code></pre>
 <pre class="r"><code>library(dplyr)</code></pre>
 <pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.0.3</code></pre>
+</div>
 <div id="positivos" class="section level1">
 <h1>POSITIVOS</h1>
 <pre class="r"><code>#Positivos
@@ -1573,17 +1575,42 @@ df_positivos$fecha &lt;- as.Date(df_positivos$fecha, &quot;X%d.%m.%Y&quot;)
 df_positivos_uf &lt;- 
 df_positivos %&gt;%
 filter(fecha == max(fecha), na.rm = TRUE) %&gt;%
-select(cod_canton, positivos)
+dplyr::select(cod_canton, positivos)
 
 sf_positivos_cantones_uf&lt;-
   left_join(sf_cantones, df_positivos_uf, by = c(&#39;cod_canton&#39;)) %&gt;%
-  arrange(desc(positivos))</code></pre>
+  arrange(desc(positivos))
+
+bins &lt;- c(0, 100, 500, 1000, 2000, Inf)
+paleta &lt;- colorBin(&quot;YlOrRd&quot;, domain = sf_positivos_cantones_uf$activos, bins = bins)
+
+
+leaflet(sf_positivos_cantones_uf)%&gt;% 
+  fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11)%&gt;% 
+  addTiles() %&gt;% 
+  addProviderTiles(providers$Thunderforest.OpenCycleMap, group = &quot;Rutas&quot;) %&gt;%
+  addProviderTiles(providers$OpenTopoMap, group = &quot;Topografia&quot;) %&gt;%
+  addProviderTiles(providers$Esri.WorldImagery, group = &quot;Imagen satelital&quot;)  %&gt;% 
+  addPolygons(fillColor = ~paleta(positivos), stroke=T, fillOpacity = 0.7,
+              color=&quot;black&quot;, weight=0.2, opacity= 0.5, group = &quot;Positivos&quot;, popup = paste(
+    &quot;Cantón: &quot;, sf_positivos_cantones_uf$canton, &quot;&lt;br&gt;&quot;,
+    &quot;Positivos: &quot;, sf_positivos_cantones_uf$positivos)
+    ) %&gt;% 
+  addLegend(&quot;bottomright&quot;, pal = paleta, values = ~positivos, title = &quot;Casos positivos&quot;, opacity = 1, group = &quot;Positivos&quot;
+  ) %&gt;%
+  addLayersControl(
+    baseGroups = c(&quot;Rutas&quot;, &quot;Topografia&quot;, &quot;Imagen satelital&quot;),
+    overlayGroups = c(&quot;Positivos&quot;),
+    options = layersControlOptions(collapsed = TRUE)) %&gt;%
+   addMiniMap(
+    toggleDisplay = TRUE,
+    position = &quot;bottomleft&quot;,
+    tiles = providers$OpenTopoMap
+  )</code></pre>
 </div>
 <div id="activos" class="section level1">
 <h1>ACTIVOS</h1>
-<pre class="r"><code>#Activos
-
-casos_activos &lt;- 
+<pre class="r"><code>casos_activos &lt;- 
   read.csv(&quot;https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_ACTIVOS.csv&quot;)
 
 df_activos&lt;-
@@ -1599,11 +1626,35 @@ df_activos$fecha &lt;- as.Date(df_activos$fecha, &quot;X%d.%m.%Y&quot;)
 df_activos_uf &lt;- 
 df_activos %&gt;%
 filter(fecha == max(fecha), na.rm = TRUE) %&gt;%
-select(cod_canton, activos)
+dplyr::select (cod_canton, activos)
+
+View(df_activos_uf)
 
 sf_activos_cantones_uf&lt;-
   left_join(sf_cantones, df_activos_uf, by = c(&#39;cod_canton&#39;)) %&gt;%
-  arrange(desc(activos))</code></pre>
+  arrange(desc(activos))
+
+bins &lt;- c(0, 50, 100, 150, 2000)
+paleta2 &lt;- colorBin(&quot;Greens&quot;, domain = sf_activos_cantones_uf$activos, bins = bins)
+
+
+leaflet(sf_activos_cantones_uf)%&gt;% 
+  fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11)%&gt;% 
+  addTiles() %&gt;% 
+  addProviderTiles(providers$Thunderforest.OpenCycleMap, group = &quot;Rutas&quot;) %&gt;%
+  addProviderTiles(providers$OpenTopoMap, group = &quot;Topografia&quot;) %&gt;%
+  addProviderTiles(providers$Esri.WorldImagery, group = &quot;Imagen satelital&quot;)  %&gt;% 
+  addPolygons(fillColor = ~paleta2(activos), stroke=T, fillOpacity = 0.7,
+              color=&quot;black&quot;, weight=0.2, opacity= 0.5, group = &quot;Activos&quot;, popup = paste(
+    &quot;Cantón: &quot;, sf_activos_cantones_uf$canton, &quot;&lt;br&gt;&quot;,
+    &quot;Activos: &quot;, sf_activos_cantones_uf$activos)
+    ) %&gt;% 
+  addLegend(&quot;bottomright&quot;, pal = paleta2, values = ~activos, title = &quot;Casos activos&quot;, opacity = 1, group = &quot;Activos&quot;
+  ) %&gt;%
+  addLayersControl(
+    baseGroups = c(&quot;Rutas&quot;, &quot;Topografia&quot;, &quot;Imagen satelital&quot;),
+    overlayGroups = c(&quot;Activos&quot;),
+    options = layersControlOptions(collapsed = TRUE))   </code></pre>
 </div>
 <div id="recuperados" class="section level1">
 <h1>RECUPERADOS</h1>
@@ -1625,7 +1676,7 @@ df_recupe$fecha &lt;- as.Date(df_recupe$fecha, &quot;X%d.%m.%Y&quot;)
 df_recupe_uf &lt;- 
 df_recupe %&gt;%
 filter(fecha == max(fecha), na.rm = TRUE) %&gt;%
-select(cod_canton, recupe)
+dplyr::select (cod_canton, recupe)
 
 sf_recupe_cantones_uf&lt;-
   left_join(sf_cantones, df_recupe_uf, by = c(&#39;cod_canton&#39;)) %&gt;%
@@ -1651,45 +1702,78 @@ df_fallecidos$fecha &lt;- as.Date(df_fallecidos$fecha, &quot;X%d.%m.%Y&quot;)
 df_fallecidos_uf &lt;- 
 df_fallecidos %&gt;%
 filter(fecha == max(fecha), na.rm = TRUE) %&gt;%
-select(cod_canton, fallecidos)
+dplyr::select (cod_canton, fallecidos)
 
 sf_fallecidos_cantones_uf&lt;-
   left_join(sf_cantones, df_fallecidos_uf, by = c(&#39;cod_canton&#39;)) %&gt;%
   arrange(desc(fallecidos))</code></pre>
 </div>
-<div id="mapa" class="section level1">
-<h1>MAPA</h1>
+<div id="elementos" class="section level1">
+<h1>Elementos</h1>
 <pre class="r"><code>sf_cantones_total &lt;-
     left_join(sf_cantones, df_positivos_uf, by = c(&#39;cod_canton&#39;)) %&gt;%
     left_join (df_fallecidos_uf) %&gt;%
     left_join (df_recupe_uf) %&gt;%
     left_join (df_activos_uf)
 
-bins &lt;- c(0, 25, 50, 75, 100)
+View(sf_cantones_total)
+
+bins &lt;- c(0, 50, 100, 200, 400)
+
 paleta1 &lt;- colorBin(&quot;YlOrRd&quot;, domain = sf_cantones_total$positivos, bins = bins)
 
-bins &lt;- c(0, 25, 50, 75, 100)
-paleta2 &lt;- colorBin(&quot;Greens&quot;, sf_cantones_total$activos, bins = bins)
+paleta2 &lt;- colorBin(&quot;Greens&quot;, domain = sf_cantones_total$activos, bins = bins)
 
-bins &lt;- c(0, 25, 50, 75, 100)
-paleta3 &lt;- colorBin(&quot;Accent&quot;, sf_cantones_total$recupe, bins = bins)
+paleta3 &lt;- colorBin(&quot;Blues&quot;, domain = sf_cantones_total$recupe, bins = bins)
 
-bins &lt;- c(0, 25, 50, 75, 100)
-paleta4 &lt;- colorBin(&quot;RdYlBu&quot;, sf_cantones_total$recupe, bins = bins)
-
-
-leaflet(sf_cantones_total)%&gt;% 
-  fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11)%&gt;% 
+paleta4 &lt;- colorBin(&quot;Reds&quot;, domain = sf_cantones_total$fallecidos, bins = bins)</code></pre>
+</div>
+<div id="mapa-general" class="section level1">
+<h1>MAPA GENERAL</h1>
+<pre class="r"><code>leaflet(sf_cantones_total)%&gt;% 
+  fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11) %&gt;% 
   addTiles() %&gt;% 
   addProviderTiles(providers$Thunderforest.OpenCycleMap, group = &quot;Rutas&quot;) %&gt;%
   addProviderTiles(providers$OpenTopoMap, group = &quot;Topografia&quot;) %&gt;%
   addProviderTiles(providers$Esri.WorldImagery, group = &quot;Imagen satelital&quot;)  %&gt;% 
-  addPolygons(stroke=T, fillOpacity = 0.1,color=&quot;black&quot;, weight=0.2, opacity= 0.1,group = &quot;Positivos&quot;,popup = paste(&quot;Cantón: &quot;, sf_cantones_total, &quot;&lt;br&gt;&quot;,&quot;Positivos: &quot;, sf_cantones_total$positivos))%&gt;% addLegend(&quot;bottomright&quot;, pal = paleta1, values = ~positivos, title = &quot;Casos positivos&quot;, opacity = 1) %&gt;%  
-  addPolygons(stroke=T, fillOpacity = 0.1, color=&quot;black&quot;, weight=0.2, opacity= 0.1, group = &quot;Positivos&quot;, popup = paste(&quot;Cantón: &quot;, sf_cantones_total$canton, &quot;&lt;br&gt;&quot;, &quot;Activos: &quot;, sf_cantones_total$activos))%&gt;% addLegend(&quot;bottomleft&quot;, pal = paleta2, values = ~activos,title = &quot;Casos activos&quot;, opacity = 1) %&gt;%  
-  addPolygons(stroke=T, fillOpacity = 0.1, color=&quot;black&quot;, weight=0.2, opacity= 0.1,group = &quot;Recupe&quot;,popup = paste(&quot;Cantón: &quot;, sf_cantones_total, &quot;&lt;br&gt;&quot;,&quot;Recuperados: &quot;, sf_cantones_total$recupe))%&gt;% addLegend(&quot;bottomleft&quot;, pal = paleta3, values = ~recupe,title = &quot;Casos recuperados&quot;,opacity = 1) %&gt;% 
-  addPolygons(stroke=T, fillOpacity = 0.1,color=&quot;black&quot;, weight=0.2, opacity= 0.1, group = &quot;Fallecidos&quot;, popup = paste( &quot;Canton: &quot;, sf_cantones_total$canton, &quot;&lt;br&gt;&quot;,&quot;Fallecidos:&quot;, sf_cantones_total$fallecidos)) %&gt;% addLegend(&quot;bottomleft&quot;, pal = paleta3, values = ~fallecidos, title = &quot;Casos fallecidos&quot;, opacity = 1) %&gt;%
-  addLayersControl(baseGroups = c(&quot;Rutas&quot;,&quot;Topografia&quot;, &quot;Imagen satelital&quot;),
-                   overlayGroups = c(&quot;Positivos&quot;, &quot;Activos&quot;,&quot;Recuperados&quot;, &quot;Fallecidos&quot;))</code></pre>
+  addPolygons(fillColor = ~paleta1(positivos), stroke=T, fillOpacity = 0.7,
+              color= &quot;black&quot;, weight=0.2, opacity= 0.5, group = &quot;Positivos&quot;, popup = paste(
+    &quot;Cantón:&quot;, sf_cantones_total$canton, &quot;&lt;br&gt;&quot;,
+    &quot;Positivos:&quot;, sf_cantones_total$positivos)
+    ) %&gt;% 
+  addLegend(&quot;bottomright&quot;, pal = paleta1, values = ~positivos, title = &quot;Casos positivos&quot;, opacity = 1, group = &quot;Positivos&quot;
+  ) %&gt;% 
+  addPolygons(fillColor = ~paleta2(activos), stroke=T, fillOpacity = 0.7,
+              color= &quot;black&quot;, weight=0.2, opacity= 0.5, group = &quot;Activos&quot;, popup = paste(
+    &quot;Cantón:&quot;, sf_cantones_total$canton, &quot;&lt;br&gt;&quot;,
+    &quot;Activos:&quot;, sf_cantones_total$activos)
+    ) %&gt;% 
+  addLegend(&quot;bottomright&quot;, pal = paleta2, values = ~activos, title = &quot;Casos activos&quot;, opacity = 1, group = &quot;Activos&quot;
+  ) %&gt;%
+  addPolygons(fillColor = ~paleta3(recupe), stroke=T, fillOpacity = 0.7,
+              color= &quot;black&quot;, weight=0.2, opacity= 0.5, group = &quot;Recuperados&quot;, popup = paste(
+    &quot;Cantón:&quot;, sf_cantones_total$canton, &quot;&lt;br&gt;&quot;,
+    &quot;Recuperados&quot;, sf_cantones_total$recupe)
+    ) %&gt;% 
+  addLegend(&quot;bottomleft&quot;, pal = paleta3, values = ~recupe, title = &quot;Casos recuperados&quot;, opacity = 1, group = &quot;Recuperados&quot;
+  ) %&gt;% 
+  addPolygons(fillColor = ~paleta4(fallecidos), stroke=T, fillOpacity = 0.7,
+              color= &quot;black&quot;, weight=0.2, opacity= 0.5, group = &quot;Fallecidos&quot;, popup = paste(
+    &quot;Cantón:&quot;, sf_cantones_total$canton, &quot;&lt;br&gt;&quot;,
+    &quot;Fallecidos&quot;, sf_cantones_total$fallecidos)
+    ) %&gt;% 
+  addLegend(&quot;bottomleft&quot;, pal = paleta4, values = ~recupe, title = &quot;Casos fallecidos&quot;, opacity = 1, group = &quot;Fallecidos&quot;
+  ) %&gt;%
+   addLayersControl(
+    baseGroups = c(&quot;Rutas&quot;, &quot;Topografia&quot;, &quot;Imagen satelital&quot;),
+    overlayGroups = c(&quot;Positivos&quot;, &quot;Activos&quot;, &quot;Recuperados&quot;, &quot;Fallecidos&quot;),
+    options = layersControlOptions(collapsed = TRUE)
+    ) %&gt;%
+   addMiniMap(
+    toggleDisplay = TRUE,
+    position = &quot;topleft&quot;,
+    tiles = providers$OpenTopoMap
+  )</code></pre>
 </div>
 
 
