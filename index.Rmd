@@ -1,7 +1,7 @@
 ---
 title: "Tarea # 3"
-author: "Fernando Bermúdez Kuminev"
-date: "2020-11-04"
+author: "Fernando Bermúdez-Kuminev"
+date: "2020-11-07"
 output:
   html_document:
     theme: readable    
@@ -18,17 +18,14 @@ library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Instalación de paquetes:
-```{r eval = FALSE, message = FALSE}
+```{r eval = FALSE, message = FALSE, include=FALSE}
 
 install.packages("leaflet")
 
 install.packages("tidyr")
 ```
 
-### Carga de paquetes:
-
-```{r message = FALSE}
+```{r message = FALSE, include=FALSE}
 
 library(leaflet)
 
@@ -41,7 +38,7 @@ library(dplyr)
 
 # POSITIVOS
 
-```{r message=FALSE, warning=FALSE, eval=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 #Positivos
 sf_cantones <-
   st_read(
@@ -75,7 +72,7 @@ bins <- c(0, 100, 500, 1000, 2000, Inf)
 paleta <- colorBin("YlOrRd", domain = sf_positivos_cantones_uf$activos, bins = bins)
 
 
-leaflet(sf_positivos_cantones_uf)%>% 
+Mapa_1 <- leaflet(sf_positivos_cantones_uf)%>% 
   fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11)%>% 
   addTiles() %>% 
   addProviderTiles(providers$Thunderforest.OpenCycleMap, group = "Rutas") %>%
@@ -99,11 +96,14 @@ leaflet(sf_positivos_cantones_uf)%>%
   )
 
 ```
+```{r}
+Mapa_1
+
+```
 
 # ACTIVOS
 
-```{r eval = FALSE}
-
+```{r echo=TRUE, include=FALSE}
 
 casos_activos <- 
   read.csv("https://raw.githubusercontent.com/pf0953-programaciongeoespacialr-2020/datos/master/covid19/ms/06_27_CSV_ACTIVOS.csv")
@@ -133,7 +133,7 @@ bins <- c(0, 50, 100, 150, 2000)
 paleta2 <- colorBin("Greens", domain = sf_activos_cantones_uf$activos, bins = bins)
 
 
-leaflet(sf_activos_cantones_uf)%>% 
+Mapa_2 <- leaflet(sf_activos_cantones_uf)%>% 
   fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11)%>% 
   addTiles() %>% 
   addProviderTiles(providers$Thunderforest.OpenCycleMap, group = "Rutas") %>%
@@ -149,14 +149,24 @@ leaflet(sf_activos_cantones_uf)%>%
   addLayersControl(
     baseGroups = c("Rutas", "Topografia", "Imagen satelital"),
     overlayGroups = c("Activos"),
-    options = layersControlOptions(collapsed = TRUE))   
+    options = layersControlOptions(collapsed = TRUE))%>%
+   addMiniMap(
+    toggleDisplay = TRUE,
+    position = "bottomleft",
+    tiles = providers$OpenTopoMap
+  )   
+
+```
+
+```{r}
+Mapa_2
 
 ```
 
 # RECUPERADOS
 
 
-```{r eval = FALSE}
+```{r echo=TRUE, include=FALSE}
 #Recuperados
 
 casos_recupe <- 
@@ -186,7 +196,7 @@ sf_recupe_cantones_uf<-
 # FALLECIDOS
 
 
-```{r eval = FALSE}
+```{r echo=TRUE, include=FALSE}
 #Fallecidos
 
 casos_fallecidos <- 
@@ -215,7 +225,7 @@ sf_fallecidos_cantones_uf<-
 
 # Elementos
 
-```{r eval=FALSE}
+```{r echo=TRUE, include=FALSE}
 sf_cantones_total <-
     left_join(sf_cantones, df_positivos_uf, by = c('cod_canton')) %>%
     left_join (df_fallecidos_uf) %>%
@@ -238,9 +248,8 @@ paleta4 <- colorBin("Reds", domain = sf_cantones_total$fallecidos, bins = bins)
 
 # MAPA GENERAL
 
-```{r eval=FALSE}
-
-MAPA_1 <- leaflet(sf_cantones_total)%>% 
+```{r echo=TRUE}
+leaflet(sf_cantones_total) %>% 
   fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11) %>% 
   addTiles() %>% 
   addProviderTiles(providers$Thunderforest.OpenCycleMap, group = "Rutas") %>%
@@ -284,6 +293,4 @@ MAPA_1 <- leaflet(sf_cantones_total)%>%
     position = "topleft",
     tiles = providers$OpenTopoMap
   )
-
-MAPA_1
 ```
