@@ -240,7 +240,7 @@ paleta4 <- colorBin("Reds", domain = sf_cantones_total$fallecidos, bins = bins)
 
 ```{r eval=FALSE}
 
-leaflet(sf_cantones_total)%>% 
+MAPA_1 <- leaflet(sf_cantones_total)%>% 
   fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11) %>% 
   addTiles() %>% 
   addProviderTiles(providers$Thunderforest.OpenCycleMap, group = "Rutas") %>%
@@ -285,6 +285,5 @@ leaflet(sf_cantones_total)%>%
     tiles = providers$OpenTopoMap
   )
 
-
-
+MAPA_1
 ```

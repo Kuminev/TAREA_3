@@ -1730,7 +1730,7 @@ paleta4 &lt;- colorBin(&quot;Reds&quot;, domain = sf_cantones_total$fallecidos, 
 </div>
 <div id="mapa-general" class="section level1">
 <h1>MAPA GENERAL</h1>
-<pre class="r"><code>leaflet(sf_cantones_total)%&gt;% 
+<pre class="r"><code>MAPA_1 &lt;- leaflet(sf_cantones_total)%&gt;% 
   fitBounds(lng1 = -86, lng2 = -82, lat1 = 8, lat2 = 11) %&gt;% 
   addTiles() %&gt;% 
   addProviderTiles(providers$Thunderforest.OpenCycleMap, group = &quot;Rutas&quot;) %&gt;%
@@ -1773,7 +1773,9 @@ paleta4 &lt;- colorBin(&quot;Reds&quot;, domain = sf_cantones_total$fallecidos, 
     toggleDisplay = TRUE,
     position = &quot;topleft&quot;,
     tiles = providers$OpenTopoMap
-  )</code></pre>
+  )
+
+MAPA_1</code></pre>
 </div>
 
 
